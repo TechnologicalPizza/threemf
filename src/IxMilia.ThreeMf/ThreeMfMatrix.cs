@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace IxMilia.ThreeMf
 {
-    public struct ThreeMfMatrix
+    public struct ThreeMfMatrix : IEquatable<ThreeMfMatrix>
     {
         internal const string TransformAttributeName = "transform";
 
@@ -14,23 +16,23 @@ namespace IxMilia.ThreeMf
         // [ M20 M21 M22 0.0 ]
         // [ M30 M31 M32 1.0 ]
 
-        public double M00 { get; set; }
-        public double M01 { get; set; }
-        public double M02 { get; set; }
+        public double M00;
+        public double M01;
+        public double M02;
 
-        public double M10 { get; set; }
-        public double M11 { get; set; }
-        public double M12 { get; set; }
+        public double M10;
+        public double M11;
+        public double M12;
 
-        public double M20 { get; set; }
-        public double M21 { get; set; }
-        public double M22 { get; set; }
+        public double M20;
+        public double M21;
+        public double M22;
 
-        public double M30 { get; set; }
-        public double M31 { get; set; }
-        public double M32 { get; set; }
+        public double M30;
+        public double M31;
+        public double M32;
 
-        public bool IsIdentity =>
+        public readonly bool IsIdentity =>
             M00 == 1.0 &&
             M01 == 0.0 &&
             M02 == 0.0 &&
@@ -61,7 +63,7 @@ namespace IxMilia.ThreeMf
             M32 = m32;
         }
 
-        public ThreeMfVertex Transform(ThreeMfVertex v)
+        public readonly ThreeMfVertex Transform(in ThreeMfVertex v)
         {
             //                       [ M00 M01 M02 0.0 ]
             // [ v.X v.Y v.Z 1.0 ] * [ M10 M11 M12 0.0 ]
@@ -74,7 +76,7 @@ namespace IxMilia.ThreeMf
             return new ThreeMfVertex(x, y, z);
         }
 
-        internal XAttribute ToXAttribute()
+        public readonly XAttribute ToXAttribute()
         {
             if (IsIdentity)
             {
@@ -85,7 +87,7 @@ namespace IxMilia.ThreeMf
             return new XAttribute(TransformAttributeName, string.Join(" ", values));
         }
 
-        internal static ThreeMfMatrix ParseMatrix(XAttribute attribute)
+        public static ThreeMfMatrix ParseMatrix(XAttribute attribute)
         {
             if (attribute == null)
             {
@@ -98,16 +100,14 @@ namespace IxMilia.ThreeMf
                 throw new ThreeMfParseException("Expected 12 parts to parse transform matrix.");
             }
 
-            var values = parts.Select(p => double.Parse(p)).ToList();
+            var values = parts.Select(p => XmlConvert.ToDouble(p)).ToList();
             return new ThreeMfMatrix(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9], values[10], values[11]);
         }
 
-        public static ThreeMfMatrix Identity => new ThreeMfMatrix(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        public static ThreeMfMatrix Identity => new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
 
-        public static bool operator ==(ThreeMfMatrix a, ThreeMfMatrix b)
+        public static bool operator ==(in ThreeMfMatrix a, in ThreeMfMatrix b)
         {
-            if (ReferenceEquals(a, b))
-                return true;
             return a.M00 == b.M00
                 && a.M01 == b.M01
                 && a.M02 == b.M02
@@ -122,32 +122,37 @@ namespace IxMilia.ThreeMf
                 && a.M32 == b.M32;
         }
 
-        public static bool operator !=(ThreeMfMatrix a, ThreeMfMatrix b)
+        public static bool operator !=(in ThreeMfMatrix a, in ThreeMfMatrix b)
         {
             return !(a == b);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
-            return M00.GetHashCode()
-                ^ M01.GetHashCode()
-                ^ M02.GetHashCode()
-                ^ M10.GetHashCode()
-                ^ M11.GetHashCode()
-                ^ M12.GetHashCode()
-                ^ M20.GetHashCode()
-                ^ M21.GetHashCode()
-                ^ M22.GetHashCode()
-                ^ M30.GetHashCode()
-                ^ M31.GetHashCode()
-                ^ M32.GetHashCode();
+            HashCode hash = new();
+            hash.Add(M00);
+            hash.Add(M01);
+            hash.Add(M02);
+            hash.Add(M10);
+            hash.Add(M11);
+            hash.Add(M12);
+            hash.Add(M20);
+            hash.Add(M21);
+            hash.Add(M22);
+            hash.Add(M30);
+            hash.Add(M31);
+            hash.Add(M32);
+            return hash.ToHashCode();
         }
 
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
-            if (obj is ThreeMfMatrix)
-                return this == (ThreeMfMatrix)obj;
-            return false;
+            return obj is ThreeMfMatrix matrix && Equals(matrix);
+        }
+
+        public readonly bool Equals(ThreeMfMatrix other)
+        {
+            return this == other;
         }
     }
 }

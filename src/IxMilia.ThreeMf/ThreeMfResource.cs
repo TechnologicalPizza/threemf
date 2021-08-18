@@ -8,21 +8,22 @@ namespace IxMilia.ThreeMf
     {
         protected const string IdAttributeName = "id";
 
-        internal static XName ObjectName = XName.Get("object", ThreeMfModel.ModelNamespace);
-        internal static XName BaseMaterialsName = XName.Get("basematerials", ThreeMfModel.ModelNamespace);
-        internal static XName ColorGroupName = XName.Get("colorgroup", ThreeMfModel.MaterialNamespace);
-        internal static XName Texture2DName = XName.Get("texture2d", ThreeMfModel.MaterialNamespace);
-        internal static XName Texture2DGroupName = XName.Get("texture2dgroup", ThreeMfModel.MaterialNamespace);
-
+        public static XName ObjectName { get; } = XName.Get("object", ThreeMfModel.ModelNamespace);
+        public static XName BaseMaterialsName { get; } = XName.Get("basematerials", ThreeMfModel.ModelNamespace);
+        public static XName ColorGroupName { get; } = XName.Get("colorgroup", ThreeMfModel.MaterialNamespace);
+        public static XName Texture2DName { get; } = XName.Get("texture2d", ThreeMfModel.MaterialNamespace);
+        public static XName Texture2DGroupName { get; } = XName.Get("texture2dgroup", ThreeMfModel.MaterialNamespace);
+        
         public int Id { get; internal set; }
 
-        abstract internal XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap);
+        public abstract XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap);
 
-        virtual internal void AfterPartAdded(Package package, PackagePart packagePart)
+        public virtual void AfterPartAdded(Package package, PackagePart packagePart)
         {
         }
 
-        internal static ThreeMfResource ParseResource(XElement element, Dictionary<int, ThreeMfResource> resourceMap, Package package)
+        public static ThreeMfResource ParseResource(
+            XElement element, Dictionary<int, ThreeMfResource> resourceMap, Package package)
         {
             if (element.Name == ObjectName)
             {

@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 
 namespace IxMilia.ThreeMf
 {
-    public struct ThreeMfsRGBColor
+    public struct ThreeMfsRGBColor : IEquatable<ThreeMfsRGBColor>
     {
-        private static Regex ColorPattern = new Regex("^#([0-9A-F]{2}){3,4}$", RegexOptions.IgnoreCase);
+        private static Regex ColorPattern = new("^#([0-9A-F]{2}){3,4}$", RegexOptions.IgnoreCase);
 
-        public byte R { get; set; }
-        public byte G { get; set; }
-        public byte B { get; set; }
-        public byte A { get; set; }
+        public byte R;
+        public byte G;
+        public byte B;
+        public byte A;
 
         public ThreeMfsRGBColor(byte r, byte g, byte b)
             : this(r, g, b, 255)
@@ -26,42 +26,27 @@ namespace IxMilia.ThreeMf
             A = a;
         }
 
-        public static bool operator==(ThreeMfsRGBColor a, ThreeMfsRGBColor b)
+        public static bool operator ==(ThreeMfsRGBColor a, ThreeMfsRGBColor b)
         {
-            if (ReferenceEquals(a, b))
-            {
-                return true;
-            }
-
             return a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
         }
 
-        public static bool operator!=(ThreeMfsRGBColor a, ThreeMfsRGBColor b)
+        public static bool operator !=(ThreeMfsRGBColor a, ThreeMfsRGBColor b)
         {
             return !(a == b);
         }
 
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
-            if (obj == null)
-            {
-                return false;
-            }
-
-            if (obj is ThreeMfsRGBColor)
-            {
-                return this == (ThreeMfsRGBColor)obj;
-            }
-
-            return false;
+            return obj is ThreeMfsRGBColor color && Equals(color);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
-            return R.GetHashCode() ^ G.GetHashCode() ^ B.GetHashCode() ^ A.GetHashCode();
+            return HashCode.Combine(R | G << 8 | B << 16 ^ A << 24);
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return $"#{R:X2}{G:X2}{B:X2}{A:X2}";
         }
@@ -78,7 +63,7 @@ namespace IxMilia.ThreeMf
                 throw new ThreeMfParseException("Invalid color string.");
             }
 
-            var u = uint.Parse(value.Substring(1), NumberStyles.HexNumber);
+            uint u = uint.Parse(value.AsSpan()[1..], NumberStyles.HexNumber);
             if (value.Length == 7)
             {
                 // if no alpha specified, assume 0xFF
@@ -93,6 +78,11 @@ namespace IxMilia.ThreeMf
             var a = (u & 0x000000FF);
 
             return new ThreeMfsRGBColor((byte)r, (byte)g, (byte)b, (byte)a);
+        }
+
+        public readonly bool Equals(ThreeMfsRGBColor other)
+        {
+            return this == other;
         }
     }
 }

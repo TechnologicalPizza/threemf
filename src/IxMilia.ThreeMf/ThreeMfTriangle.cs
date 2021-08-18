@@ -55,9 +55,9 @@ namespace IxMilia.ThreeMf
 
         internal static ThreeMfTriangle ParseTriangle(XElement triangleElement, IList<ThreeMfVertex> vertices, Dictionary<int, ThreeMfResource> resourceMap)
         {
-            var v1Index = triangleElement.AttributeIntValueOrThrow(V1AttributeName);
-            var v2Index = triangleElement.AttributeIntValueOrThrow(V2AttributeName);
-            var v3Index = triangleElement.AttributeIntValueOrThrow(V3AttributeName);
+            var v1Index = triangleElement.AttributeIntOrThrow(V1AttributeName);
+            var v2Index = triangleElement.AttributeIntOrThrow(V2AttributeName);
+            var v3Index = triangleElement.AttributeIntOrThrow(V3AttributeName);
 
             if (v1Index == v2Index || v1Index == v3Index || v2Index == v3Index)
             {

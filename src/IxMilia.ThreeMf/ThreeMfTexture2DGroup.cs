@@ -10,7 +10,7 @@ namespace IxMilia.ThreeMf
     {
         private const string TextureIdAttributeName = "texid";
 
-        public IList<ThreeMfTexture2DCoordinate> Coordinates { get; } = new ListNonNull<ThreeMfTexture2DCoordinate>();
+        public ListNonNull<ThreeMfTexture2DCoordinate> Coordinates { get; } = new ListNonNull<ThreeMfTexture2DCoordinate>();
         public ThreeMfTexture2D Texture { get; set; }
 
         IEnumerable<IThreeMfPropertyItem> IThreeMfPropertyResource.PropertyItems => Coordinates;
@@ -20,7 +20,7 @@ namespace IxMilia.ThreeMf
             Texture = texture;
         }
 
-        internal override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
+        public override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
             return new XElement(Texture2DGroupName,
                 new XAttribute(IdAttributeName, Id),
@@ -28,11 +28,12 @@ namespace IxMilia.ThreeMf
                 Coordinates.Select(c => c.ToXElement()));
         }
 
-        internal static ThreeMfTexture2DGroup ParseTexture2DGroup(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
+        public static ThreeMfTexture2DGroup ParseTexture2DGroup(
+            XElement element, Dictionary<int, ThreeMfResource> resourceMap)
         {
-            var texture = resourceMap[element.AttributeIntValueOrThrow(TextureIdAttributeName)] as ThreeMfTexture2D;
+            var texture = resourceMap[element.AttributeIntOrThrow(TextureIdAttributeName)] as ThreeMfTexture2D;
             var textureGroup = new ThreeMfTexture2DGroup(texture);
-            textureGroup.Id = element.AttributeIntValueOrThrow(IdAttributeName);
+            textureGroup.Id = element.AttributeIntOrThrow(IdAttributeName);
             foreach (var textureCoordinateElement in element.Elements(ThreeMfTexture2DCoordinate.Texture2DCoordinateName))
             {
                 var coord = ThreeMfTexture2DCoordinate.ParseCoordinate(textureCoordinateElement);

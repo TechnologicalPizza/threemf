@@ -24,7 +24,7 @@ namespace IxMilia.ThreeMf
 
         internal static ThreeMfColor ParseColor(XElement element)
         {
-            var color = ThreeMfsRGBColor.Parse(element.AttributeValueOrThrow(ColorAttributeName));
+            var color = ThreeMfsRGBColor.Parse(element.AttributeOrThrow(ColorAttributeName).Value);
             return new ThreeMfColor(color);
         }
     }

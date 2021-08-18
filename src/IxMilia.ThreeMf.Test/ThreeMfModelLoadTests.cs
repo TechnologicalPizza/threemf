@@ -9,7 +9,7 @@ namespace IxMilia.ThreeMf.Test
 {
     public class ThreeMfModelLoadTests : ThreeMfAbstractTestBase
     {
-        internal static ThreeMfModel ParseXml(string contents, params Tuple<string, string, byte[]>[] packageEntries)
+        internal static ThreeMfModel ParseXml(string contents, params ValueTuple<string, string, byte[]>[] packageEntries)
         {
             var document = XDocument.Parse(contents);
             var dummyPackage = Package.Open(new MemoryStream(), FileMode.Create);
@@ -19,23 +19,22 @@ namespace IxMilia.ThreeMf.Test
                 var contentType = packageEntry.Item2;
                 var data = packageEntry.Item3;
                 var packagePart = dummyPackage.CreatePart(new Uri(uri, UriKind.RelativeOrAbsolute), contentType);
-                using (var partStream = packagePart.GetStream())
-                {
-                    partStream.Write(data, 0, data.Length);
-                }
+
+                using var partStream = packagePart.GetStream();
+                partStream.Write(data, 0, data.Length);
             }
 
             return ThreeMfModel.LoadXml(document.Root, dummyPackage);
         }
 
-        private ThreeMfModel FromContent(string content, params Tuple<string, string, byte[]>[] packageEntries)
+        private static ThreeMfModel FromContent(string content, params ValueTuple<string, string, byte[]>[] packageEntries)
         {
             return ParseXml($@"<model xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"">" +
                 content +
                 "</model>", packageEntries);
         }
 
-        private void AssertUnits(string unitsString, ThreeMfModelUnits expectedUnits)
+        private static void AssertUnits(string unitsString, ThreeMfModelUnits expectedUnits)
         {
             var model = ParseXml($@"<model unit=""{unitsString}"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>");
             Assert.Equal(expectedUnits, model.ModelUnits);
@@ -325,7 +324,7 @@ namespace IxMilia.ThreeMf.Test
   <m:texture2d id=""1"" path=""/3D/Textures/texture.png"" contenttype=""image/png"" box=""0 1 2 3"" tilestyleu=""mirror"" />
 </resources>
 ",
-                Tuple.Create("/3D/Textures/texture.png", "image/png", new byte[0]));
+                ("/3D/Textures/texture.png", "image/png", Array.Empty<byte>()));
 
             var texture = (ThreeMfTexture2D)model.Resources.Single();
             Assert.Equal(ThreeMfImageContentType.Png, texture.ContentType);
@@ -348,7 +347,7 @@ namespace IxMilia.ThreeMf.Test
   </m:texture2dgroup>
 </resources>
 ",
-                Tuple.Create("/3D/Textures/texture.png", "image/png", new byte[0]));
+                ("/3D/Textures/texture.png", "image/png", Array.Empty<byte>()));
 
             var texture = (ThreeMfTexture2D)model.Resources.First();
             var textureGroup = (ThreeMfTexture2DGroup)model.Resources.Last();
@@ -369,7 +368,8 @@ namespace IxMilia.ThreeMf.Test
     </mesh>
   </object>
 </resources>
-", Tuple.Create($"{ThreeMfObject.ThumbnailPathPrefix}thumb.jpg", "image/jpeg", StringToBytes("jpeg thumbnail")));
+", ($"{ThreeMfObject.ThumbnailPathPrefix}thumb.jpg", "image/jpeg", StringToBytes("jpeg thumbnail")));
+            
             var obj = (ThreeMfObject)model.Resources.Single();
             Assert.Equal("jpeg thumbnail", BytesToString(obj.ThumbnailData));
         }

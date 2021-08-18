@@ -1,43 +1,46 @@
-﻿using System.Xml.Linq;
+﻿using System;
+using System.Xml.Linq;
 
 namespace IxMilia.ThreeMf.Extensions
 {
     internal static class XmlExtensions
     {
-        public static string AttributeValueOrThrow(this XElement element, string attributeName, string errorMessage)
+        public static XAttribute AttributeOrThrow(this XElement element, string attributeName)
         {
-            var attribute = element.Attribute(attributeName);
+            XAttribute attribute = element.Attribute(attributeName);
             if (attribute == null)
             {
-                throw new ThreeMfParseException(errorMessage);
+                throw new ThreeMfParseException($"Expected attribute '{attributeName}'.");
             }
-
-            return attribute.Value;
+            return attribute;
         }
 
-        public static string AttributeValueOrThrow(this XElement element, string attributeName)
+        public static int AttributeIntOrThrow(this XElement element, string attributeName)
         {
-            return element.AttributeValueOrThrow(attributeName, $"Expected attribute '{attributeName}'.");
-        }
-
-        public static int AttributeIntValueOrThrow(this XElement element, string attributeName)
-        {
-            if (!int.TryParse(element.AttributeValueOrThrow(attributeName), out var value))
+            XAttribute attribute = element.AttributeOrThrow(attributeName);
+            try
             {
-                throw new ThreeMfParseException($"Unable to parse attribute '{attributeName}' as an int.");
+                return (int)attribute;
             }
-
-            return value;
+            catch (Exception ex)
+            {
+                throw new ThreeMfParseException(
+                    $"Unable to parse attribute '{attributeName}' as an int.", ex);
+            }
         }
 
-        public static double AttributeDoubleValueOrThrow(this XElement element, string attributeName)
+        public static double AttributeDoubleOrThrow(this XElement element, string attributeName)
         {
-            if (!double.TryParse(element.AttributeValueOrThrow(attributeName), out var value))
+            XAttribute attribute = element.AttributeOrThrow(attributeName);
+            try
             {
-                throw new ThreeMfParseException($"Unable to parse  attribute '{attributeName}' as a double.");
+                return (double)attribute;
             }
-
-            return value;
+            catch (Exception ex)
+            {
+                throw new ThreeMfParseException(
+                    $"Unable to parse attribute '{attributeName}' as a double.", ex);
+            }
         }
     }
 }

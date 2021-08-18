@@ -9,8 +9,9 @@ namespace IxMilia.ThreeMf
 {
     public class ThreeMfModel
     {
-        internal const string ModelNamespace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
-        internal const string MaterialNamespace = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+        public const string ModelNamespace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+        public const string MaterialNamespace = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+
         private const string Metadata_Title = "Title";
         private const string Metadata_Designer = "Designer";
         private const string Metadata_Description = "Description";
@@ -24,14 +25,14 @@ namespace IxMilia.ThreeMf
         private const string RequiredExtensionsAttributeName = "requiredextensions";
         private const string DefaultLanguage = "en-US";
 
-        private static XName ModelName = XName.Get("model", ModelNamespace);
-        private static XName BuildName = XName.Get("build", ModelNamespace);
-        internal static XName ResourcesName = XName.Get("resources", ModelNamespace);
-        private static XName MetadataName = XName.Get("metadata", ModelNamespace);
-        
+        public static XName ModelName { get; } = XName.Get("model", ModelNamespace);
+        public static XName BuildName { get; } = XName.Get("build", ModelNamespace);
+        public static XName ResourcesName { get; } = XName.Get("resources", ModelNamespace);
+        public static XName MetadataName { get; } = XName.Get("metadata", ModelNamespace);
+
         private static XName XmlLanguageAttributeName = XNamespace.Xml + "lang";
 
-        private static HashSet<string> KnownExtensionNamespaces = new HashSet<string>()
+        private static HashSet<string> KnownExtensionNamespaces = new()
         {
             ModelNamespace,
             MaterialNamespace
@@ -47,8 +48,8 @@ namespace IxMilia.ThreeMf
         public string CreationDate { get; set; }
         public string ModificationDate { get; set; }
 
-        public IList<ThreeMfResource> Resources { get; } = new ListNonNull<ThreeMfResource>();
-        public IList<ThreeMfModelItem> Items { get; } = new ListNonNull<ThreeMfModelItem>();
+        public ListNonNull<ThreeMfResource> Resources { get; } = new ListNonNull<ThreeMfResource>();
+        public ListNonNull<ThreeMfModelItem> Items { get; } = new ListNonNull<ThreeMfModelItem>();
 
         public ThreeMfModel()
         {
@@ -57,32 +58,17 @@ namespace IxMilia.ThreeMf
 
         private void ParseModelUnits(string value)
         {
-            switch (value)
+            ModelUnits = value switch
             {
-                case "micron":
-                    ModelUnits = ThreeMfModelUnits.Micron;
-                    break;
-                case "millimeter":
-                    ModelUnits = ThreeMfModelUnits.Millimeter;
-                    break;
-                case "centimeter":
-                    ModelUnits = ThreeMfModelUnits.Centimeter;
-                    break;
-                case "inch":
-                    ModelUnits = ThreeMfModelUnits.Inch;
-                    break;
-                case "foot":
-                    ModelUnits = ThreeMfModelUnits.Foot;
-                    break;
-                case "meter":
-                    ModelUnits = ThreeMfModelUnits.Meter;
-                    break;
-                case null:
-                    ModelUnits = ThreeMfModelUnits.Millimeter;
-                    break;
-                default:
-                    throw new ThreeMfParseException($"Unsupported model unit '{value}'");
-            }
+                "micron" => ThreeMfModelUnits.Micron,
+                "millimeter" => ThreeMfModelUnits.Millimeter,
+                "centimeter" => ThreeMfModelUnits.Centimeter,
+                "inch" => ThreeMfModelUnits.Inch,
+                "foot" => ThreeMfModelUnits.Foot,
+                "meter" => ThreeMfModelUnits.Meter,
+                null => ThreeMfModelUnits.Millimeter,
+                _ => throw new ThreeMfParseException($"Unsupported model unit '{value}'"),
+            };
         }
 
         internal static ThreeMfModel LoadXml(XElement root, Package package)
@@ -117,7 +103,7 @@ namespace IxMilia.ThreeMf
             return model;
         }
 
-        internal XElement ToXElement(Package package)
+        public XElement ToXElement()
         {
             // ensure build items are included
             var resourcesHash = new HashSet<ThreeMfResource>(Resources);
@@ -203,7 +189,7 @@ namespace IxMilia.ThreeMf
             return modelXml;
         }
 
-        internal void AfterPartAdded(Package package, PackagePart packagePart)
+        public void AfterPartAdded(Package package, PackagePart packagePart)
         {
             foreach (var resource in Resources)
             {
@@ -211,7 +197,7 @@ namespace IxMilia.ThreeMf
             }
         }
 
-        private IEnumerable<XElement> GetMetadataXElements(string metadataType, string value)
+        private static IEnumerable<XElement> GetMetadataXElements(string metadataType, string value)
         {
             return string.IsNullOrEmpty(value)
                 ? null
@@ -228,17 +214,23 @@ namespace IxMilia.ThreeMf
                 return resourceMap;
             }
 
-            foreach (var element in resources.Elements())
+            try
             {
-                var resource = ThreeMfResource.ParseResource(element, resourceMap, package);
-                if (resource != null)
+                foreach (var element in resources.Elements())
                 {
-                    Resources.Add(resource);
-                    resourceMap.Add(resource.Id, resource);
+                    var resource = ThreeMfResource.ParseResource(element, resourceMap, package);
+                    if (resource != null)
+                    {
+                        Resources.Add(resource);
+                        resourceMap.Add(resource.Id, resource);
+                    }
                 }
+                return resourceMap;
             }
-
-            return resourceMap;
+            catch (ArgumentException ex)
+            {
+                throw new ThreeMfParseException(null, ex);
+            }
         }
 
         private void ParseBuild(XElement build, Dictionary<int, ThreeMfResource> resourceMap)

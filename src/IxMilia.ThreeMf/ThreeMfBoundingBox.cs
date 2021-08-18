@@ -22,7 +22,7 @@ namespace IxMilia.ThreeMf
             Height = height;
         }
 
-        public static ThreeMfBoundingBox Default => new ThreeMfBoundingBox(0.0, 0.0, 1.0, 1.0);
+        public static ThreeMfBoundingBox Default => new(0.0, 0.0, 1.0, 1.0);
 
         internal XAttribute ToXAttribute()
         {

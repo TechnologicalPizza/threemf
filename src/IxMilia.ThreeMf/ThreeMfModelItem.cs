@@ -40,7 +40,7 @@ namespace IxMilia.ThreeMf
 
         internal static ThreeMfModelItem ParseItem(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
         {
-            if (!int.TryParse(element.AttributeValueOrThrow(ObjectIdAttributeName), out var objectId) &&
+            if (!int.TryParse(element.AttributeOrThrow(ObjectIdAttributeName).Value, out var objectId) &&
                 !resourceMap.ContainsKey(objectId))
             {
                 throw new ThreeMfParseException($"Invalid object id {objectId}.");

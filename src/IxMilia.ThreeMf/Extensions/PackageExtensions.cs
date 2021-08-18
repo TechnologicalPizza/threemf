@@ -9,7 +9,7 @@ namespace IxMilia.ThreeMf.Extensions
 {
     internal static class PackageExtensions
     {
-        private static XmlWriterSettings WriterSettings = new XmlWriterSettings()
+        private static XmlWriterSettings WriterSettings = new()
         {
             Encoding = Encoding.UTF8,
             Indent = true,
@@ -19,15 +19,13 @@ namespace IxMilia.ThreeMf.Extensions
         public static byte[] GetPartBytes(this Package package, string uri)
         {
             var packagePart = package.GetPart(new Uri(uri, UriKind.RelativeOrAbsolute));
-            using (var stream = packagePart.GetStream())
-            using (var memoryStream = new MemoryStream())
-            {
-                stream.CopyTo(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-                var data = new byte[memoryStream.Length];
-                memoryStream.Read(data, 0, data.Length);
-                return data;
-            }
+            using var stream = packagePart.GetStream();
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            var data = new byte[memoryStream.Length];
+            memoryStream.Read(data, 0, data.Length);
+            return data;
         }
 
         public static PackagePart WriteXml(this Package package, string path, string contentType, XElement xml)

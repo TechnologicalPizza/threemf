@@ -35,7 +35,7 @@ namespace IxMilia.ThreeMf.Extensions
 
         public static int ParseAndValidateRequiredResourceIndex(this IThreeMfPropertyResource propertyResource, XElement element, string attributeName)
         {
-            var index = element.AttributeIntValueOrThrow(attributeName);
+            var index = element.AttributeIntOrThrow(attributeName);
             propertyResource.ValidatePropertyIndex(index);
             return index;
         }
@@ -65,6 +65,7 @@ namespace IxMilia.ThreeMf.Extensions
                 (propertyResource.PropertyItems as IList<ThreeMfColor>)?.Count ??
                 (propertyResource.PropertyItems as IList<ThreeMfTexture2DCoordinate>)?.Count ??
                 -1;
+
             if (propertyCount == -1)
             {
                 Debug.Assert(false, "Unknown property item type.  Falling back to much slower .Count().");

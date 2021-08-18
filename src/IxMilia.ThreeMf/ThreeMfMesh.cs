@@ -9,9 +9,9 @@ namespace IxMilia.ThreeMf
         private static XName VerticesName = XName.Get("vertices", ThreeMfModel.ModelNamespace);
         private static XName TrianglesName = XName.Get("triangles", ThreeMfModel.ModelNamespace);
 
-        public IList<ThreeMfTriangle> Triangles { get; } = new List<ThreeMfTriangle>();
+        public List<ThreeMfTriangle> Triangles { get; } = new List<ThreeMfTriangle>();
 
-        internal XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
+        public XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
             var vertices = Triangles.SelectMany(t => new[] { t.V1, t.V2, t.V3 }).Distinct().Select((v, i) => new { v, i }).ToDictionary(x => x.v, x => x.i);
             var verticesXml = vertices.Select(v => v.Key.ToXElement());
@@ -21,7 +21,7 @@ namespace IxMilia.ThreeMf
                 new XElement(TrianglesName, trianglesXml));
         }
 
-        internal static ThreeMfMesh ParseMesh(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
+        public static ThreeMfMesh ParseMesh(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
         {
             if (element == null)
             {

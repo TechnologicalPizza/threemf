@@ -17,33 +17,24 @@ namespace IxMilia.ThreeMf
 
         public static string ToTileStyleString(this ThreeMfTileStyle tileStyle)
         {
-            switch (tileStyle)
+            return tileStyle switch
             {
-                case ThreeMfTileStyle.Wrap:
-                    return WrapStyle;
-                case ThreeMfTileStyle.Mirror:
-                    return MirrorStyle;
-                case ThreeMfTileStyle.Clamp:
-                    return ClampStyle;
-                default:
-                    throw new InvalidOperationException();
-            }
+                ThreeMfTileStyle.Wrap => WrapStyle,
+                ThreeMfTileStyle.Mirror => MirrorStyle,
+                ThreeMfTileStyle.Clamp => ClampStyle,
+                _ => throw new InvalidOperationException(),
+            };
         }
 
         public static ThreeMfTileStyle ParseTileStyle(string tileStyle)
         {
-            switch (tileStyle)
+            return tileStyle switch
             {
-                case WrapStyle:
-                case null:
-                    return ThreeMfTileStyle.Wrap;
-                case MirrorStyle:
-                    return ThreeMfTileStyle.Mirror;
-                case ClampStyle:
-                    return ThreeMfTileStyle.Clamp;
-                default:
-                    throw new ThreeMfParseException($"Invalid tile style '{tileStyle}'.");
-            }
+                WrapStyle or null => ThreeMfTileStyle.Wrap,
+                MirrorStyle => ThreeMfTileStyle.Mirror,
+                ClampStyle => ThreeMfTileStyle.Clamp,
+                _ => throw new ThreeMfParseException($"Invalid tile style '{tileStyle}'."),
+            };
         }
     }
 }

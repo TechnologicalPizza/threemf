@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace IxMilia.ThreeMf.Collections
 {
-    internal class ListNonNull<T> : ListWithPredicates<T>
+    public class ListNonNull<T> : ListWithPredicates<T>
     {
         public ListNonNull()
             : base(item => item != null, 0)
@@ -12,7 +12,7 @@ namespace IxMilia.ThreeMf.Collections
         }
     }
 
-    internal class ListNonNullWithMinimum<T> : ListWithPredicates<T>
+    public class ListNonNullWithMinimum<T> : ListWithPredicates<T>
     {
         public ListNonNullWithMinimum(int minimum)
             : base(item => item != null, minimum, false)
@@ -20,9 +20,9 @@ namespace IxMilia.ThreeMf.Collections
         }
     }
 
-    internal class ListWithPredicates<T> : IList<T>
+    public class ListWithPredicates<T> : IList<T>
     {
-        private List<T> _items = new List<T>();
+        private List<T> _items = new();
         public Func<T, bool> ItemPredicate { get; }
         public int MinimumCount { get; }
 

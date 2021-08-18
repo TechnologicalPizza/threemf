@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
@@ -23,14 +22,12 @@ namespace IxMilia.ThreeMf
         internal static XName RelationshipsName = XName.Get("Relationships", RelationshipNamespace);
         private static XName RelationshipName = XName.Get("Relationship", RelationshipNamespace);
 
-        public IList<ThreeMfModel> Models { get; } = new ListNonNull<ThreeMfModel>();
+        public ListNonNull<ThreeMfModel> Models { get; } = new ListNonNull<ThreeMfModel>();
 
         public void Save(string path)
         {
-            using (var stream = new FileStream(path, FileMode.Create))
-            {
-                Save(stream);
-            }
+            using var stream = new FileStream(path, FileMode.Create);
+            Save(stream);
         }
 
         public void Save(Stream stream)
@@ -41,18 +38,17 @@ namespace IxMilia.ThreeMf
                 var suffix = currentModelSuffix++ == 0 ? string.Empty : $"-{currentModelSuffix}";
                 return string.Concat(DefaultModelEntryName, suffix, ModelPathExtension);
             }
-            using (var package = Package.Open(stream, FileMode.Create))
+
+            using var package = Package.Open(stream, FileMode.Create);
+            var modelPaths = Enumerable.Range(0, Models.Count).Select(_ => NextModelFileName()).ToList();
+            for (int i = 0; i < Models.Count; i++)
             {
-                var modelPaths = Enumerable.Range(0, Models.Count).Select(_ => NextModelFileName()).ToList();
-                for (int i = 0; i < Models.Count; i++)
-                {
-                    var model = Models[i];
-                    var modelXml = model.ToXElement(package);
-                    var modelPath = modelPaths[i];
-                    var modelPart = package.WriteXml(modelPath, ModelContentType, modelXml);
-                    package.CreateRelationship(new Uri(modelPath, UriKind.RelativeOrAbsolute), TargetMode.Internal, ModelRelationshipType);
-                    model.AfterPartAdded(package, modelPart);
-                }
+                var model = Models[i];
+                var modelXml = model.ToXElement();
+                var modelPath = modelPaths[i];
+                var modelPart = package.WriteXml(modelPath, ModelContentType, modelXml);
+                package.CreateRelationship(new Uri(modelPath, UriKind.RelativeOrAbsolute), TargetMode.Internal, ModelRelationshipType);
+                model.AfterPartAdded(package, modelPart);
             }
         }
 
@@ -66,18 +62,14 @@ namespace IxMilia.ThreeMf
 
         public static ThreeMfFile Load(string path)
         {
-            using (var stream = new FileStream(path, FileMode.Open))
-            {
-                return Load(stream);
-            }
+            using var stream = new FileStream(path, FileMode.Open);
+            return Load(stream);
         }
 
         public static ThreeMfFile Load(Stream stream)
         {
-            using (var package = Package.Open(stream))
-            {
-                return Load(package);
-            }
+            using var package = Package.Open(stream);
+            return Load(package);
         }
 
         public static ThreeMfFile Load(Package package)
@@ -87,12 +79,11 @@ namespace IxMilia.ThreeMf
             {
                 var modelUri = modelRelationship.TargetUri;
                 var modelPart = package.GetPart(modelUri);
-                using (var modelStream = modelPart.GetStream())
-                {
-                    var document = XDocument.Load(modelStream);
-                    var model = ThreeMfModel.LoadXml(document.Root, package);
-                    file.Models.Add(model);
-                }
+                
+                using var modelStream = modelPart.GetStream();
+                var document = XDocument.Load(modelStream);
+                var model = ThreeMfModel.LoadXml(document.Root, package);
+                file.Models.Add(model);
             }
 
             return file;

@@ -1,40 +1,37 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.IO.Packaging;
 using Xunit;
 
 namespace IxMilia.ThreeMf.Test
 {
     public class ThreeMfModelWriteTests : ThreeMfAbstractTestBase
     {
-        private string StripXmlns(string value)
+        private static string StripXmlns(string value)
         {
             // don't want to specify this in every test
             return value.Replace(" xmlns=\"" + ThreeMfModel.ModelNamespace + "\"", "");
         }
 
-        private string GetStrippedModelXml(ThreeMfModel model)
+        private static string GetStrippedModelXml(ThreeMfModel model)
         {
             // don't want to specify the defaults in every test
-            var dummyPackage = Package.Open(new MemoryStream(), FileMode.Create);
-            return StripXmlns(model.ToXElement(dummyPackage).ToString())
+            return StripXmlns(model.ToXElement().ToString())
                 .Replace(@" xml:lang=""en-US""", "")
                 .Replace(@" unit=""millimeter""", "");
         }
 
-        private void VerifyModelXml(string xml, ThreeMfModel model)
+        private static void VerifyModelXml(string xml, ThreeMfModel model)
         {
             var actual = GetStrippedModelXml(model);
             Assert.Equal(xml.Trim(), actual);
         }
 
-        private void VerifyMeshXml(string xml, ThreeMfMesh mesh)
+        private static void VerifyMeshXml(string xml, ThreeMfMesh mesh)
         {
             var actual = StripXmlns(mesh.ToXElement(new Dictionary<ThreeMfResource, int>()).ToString());
             Assert.Equal(xml.Trim(), actual);
         }
 
-        private ThreeMfModel ParseXml(string contents)
+        private static ThreeMfModel ParseXml(string contents)
         {
             return ThreeMfModelLoadTests.ParseXml(contents);
         }
@@ -109,7 +106,7 @@ namespace IxMilia.ThreeMf.Test
         [Fact]
         public void ReadSupportedRequiredExtensionsTest()
         {
-            var model = ParseXml($@"<model requiredextensions=""m"" xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"" />");
+            _ = ParseXml($@"<model requiredextensions=""m"" xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"" />");
         }
 
         [Fact]
@@ -211,7 +208,7 @@ namespace IxMilia.ThreeMf.Test
             model.Items.Add(new ThreeMfModelItem(obj));
 
             // note that as of here, no objects have ever been added to `model.Resources`
-            Assert.Equal(0, model.Resources.Count);
+            Assert.Empty(model.Resources);
 
             // but calling `.ToXElement()` will force it to be populated appropriately
             VerifyModelXml(@"
@@ -354,7 +351,7 @@ namespace IxMilia.ThreeMf.Test
         public void WriteTexture2DTest()
         {
             var model = new ThreeMfModel();
-            var texture = new ThreeMfTexture2D(new byte[0], ThreeMfImageContentType.Jpeg);
+            var texture = new ThreeMfTexture2D(System.Array.Empty<byte>(), ThreeMfImageContentType.Jpeg);
             texture.BoundingBox = new ThreeMfBoundingBox(0.0, 1.0, 2.0, 3.0);
             texture.TileStyleU = ThreeMfTileStyle.Mirror;
             model.Resources.Add(texture);
@@ -378,7 +375,7 @@ namespace IxMilia.ThreeMf.Test
         public void WriteTexture2DGroupTest()
         {
             var model = new ThreeMfModel();
-            var textureGroup = new ThreeMfTexture2DGroup(new ThreeMfTexture2D(new byte[0], ThreeMfImageContentType.Jpeg));
+            var textureGroup = new ThreeMfTexture2DGroup(new ThreeMfTexture2D(System.Array.Empty<byte>(), ThreeMfImageContentType.Jpeg));
             textureGroup.Coordinates.Add(new ThreeMfTexture2DCoordinate(1.0, 2.0));
             model.Resources.Add(textureGroup);
 

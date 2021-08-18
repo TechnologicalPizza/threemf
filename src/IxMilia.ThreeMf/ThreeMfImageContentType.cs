@@ -15,41 +15,32 @@ namespace IxMilia.ThreeMf
 
         public static string ToContentTypeString(this ThreeMfImageContentType contentType)
         {
-            switch (contentType)
+            return contentType switch
             {
-                case ThreeMfImageContentType.Jpeg:
-                    return JpegContentType;
-                case ThreeMfImageContentType.Png:
-                    return PngContentType;
-                default:
-                    throw new InvalidOperationException();
-            }
+                ThreeMfImageContentType.Jpeg => JpegContentType,
+                ThreeMfImageContentType.Png => PngContentType,
+                _ => throw new InvalidOperationException(),
+            };
         }
 
         public static string ToExtensionString(this ThreeMfImageContentType contentType)
         {
-            switch (contentType)
+            return contentType switch
             {
-                case ThreeMfImageContentType.Jpeg:
-                    return ".jpg";
-                case ThreeMfImageContentType.Png:
-                    return ".png";
-                default:
-                    throw new InvalidOperationException();
-            }
+                ThreeMfImageContentType.Jpeg => ".jpg",
+                ThreeMfImageContentType.Png => ".png",
+                _ => throw new InvalidOperationException(),
+            };
         }
 
         public static ThreeMfImageContentType ParseContentType(string contentType)
         {
-            switch (contentType)
+            return contentType switch
             {
-                case JpegContentType:
-                    return ThreeMfImageContentType.Jpeg;
-                case PngContentType:
-                    return ThreeMfImageContentType.Png;
-                default:
-                    throw new ThreeMfParseException($"Invalid image content type '{contentType}'.");
-            }
+                JpegContentType => ThreeMfImageContentType.Jpeg,
+                PngContentType => ThreeMfImageContentType.Png,
+                _ => throw new ThreeMfParseException($"Invalid image content type '{contentType}'."),
+            };
         }
     }
 }

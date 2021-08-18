@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,33 +12,30 @@ namespace IxMilia.ThreeMf.Test
     {
         private static ThreeMfFile FileFromParts(params Tuple<string, string>[] filesAndContents)
         {
-            using (var ms = new MemoryStream())
+            using var ms = new MemoryStream();
+            using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
             {
-                using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
-                {
-                    var contentTypes = Tuple.Create("[Content_Types].xml", @"
+                var contentTypes = Tuple.Create("[Content_Types].xml", @"
 <Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
   <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml"" />
   <Default Extension=""model"" ContentType=""application/vnd.ms-package.3dmanufacturing-3dmodel+xml"" />
 </Types>
 ");
-                    foreach (var pair in filesAndContents.Append(contentTypes))
-                    {
-                        var path = pair.Item1;
-                        var contents = pair.Item2;
-                        var entry = archive.CreateEntry(path);
-                        using (var stream = entry.Open())
-                        using (var writer = new StreamWriter(stream))
-                        {
-                            writer.Write(contents);
-                        }
-                    }
-                }
+                foreach (var pair in filesAndContents.Append(contentTypes))
+                {
+                    var path = pair.Item1;
+                    var contents = pair.Item2;
+                    var entry = archive.CreateEntry(path);
 
-                ms.Seek(0, SeekOrigin.Begin);
-                var file = ThreeMfFile.Load(ms);
-                return file;
+                    using var stream = entry.Open();
+                    using var writer = new StreamWriter(stream);
+                    writer.Write(contents);
+                }
             }
+
+            ms.Seek(0, SeekOrigin.Begin);
+            var file = ThreeMfFile.Load(ms);
+            return file;
         }
 
         [Fact]
@@ -60,16 +58,25 @@ namespace IxMilia.ThreeMf.Test
                     // not yet implemented
                     continue;
                 }
+
+                void LoadModels()
+                {
+                    using var fs = new FileStream(path, FileMode.Open);
+                    var file = ThreeMfFile.Load(fs);
+                    foreach (var model in file.Models)
+                    {
+                        loadedFiles++;
+                    }
+                }
+
+                Debug.WriteLine(path);
                 if (pathParts.Contains("MUSTFAIL"))
                 {
-                    // expected to fail
-                    continue;
+                    Assert.Throws<ThreeMfParseException>(LoadModels);
                 }
-                using (var fs = new FileStream(path, FileMode.Open))
+                else
                 {
-                    var file = ThreeMfFile.Load(fs);
-                    var model = file.Models.Single();
-                    loadedFiles++;
+                    LoadModels();
                 }
             }
 
@@ -121,7 +128,7 @@ namespace IxMilia.ThreeMf.Test
 ")
             );
 
-            Assert.Equal(0, file.Models.Count);
+            Assert.Empty(file.Models);
         }
     }
 }

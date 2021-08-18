@@ -10,18 +10,18 @@ namespace IxMilia.ThreeMf
 {
     public class ThreeMfObject : ThreeMfResource
     {
-        private const string NameAttributeName = "name";
-        private const string PartNumberAttributeName = "partnumber";
-        private const string PropertyReferenceAttributeName = "pid";
-        private const string PropertyIndexAttributeName = "pindex";
-        private const string ThumbnailAttributeName = "thumbnail";
-        private const string TypeAttributeName = "type";
-        private const string ThumbnailRelationshipType = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail";
+        protected const string NameAttributeName = "name";
+        protected const string PartNumberAttributeName = "partnumber";
+        protected const string PropertyReferenceAttributeName = "pid";
+        protected const string PropertyIndexAttributeName = "pindex";
+        protected const string ThumbnailAttributeName = "thumbnail";
+        protected const string TypeAttributeName = "type";
+        protected const string ThumbnailRelationshipType = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail";
 
-        internal const string ThumbnailPathPrefix = "/3D/Thumbnails/";
+        public const string ThumbnailPathPrefix = "/3D/Thumbnails/";
 
-        internal static XName MeshName = XName.Get("mesh", ThreeMfModel.ModelNamespace);
-        internal static XName ComponentsName = XName.Get("components", ThreeMfModel.ModelNamespace);
+        public static XName MeshName { get; } = XName.Get("mesh", ThreeMfModel.ModelNamespace);
+        public static XName ComponentsName { get; } = XName.Get("components", ThreeMfModel.ModelNamespace);
 
         public ThreeMfObjectType Type { get; set; }
         public IThreeMfPropertyResource PropertyResource { get; set; }
@@ -40,7 +40,7 @@ namespace IxMilia.ThreeMf
             set => _mesh = value ?? throw new ArgumentNullException(nameof(value));
         }
 
-        public IList<ThreeMfComponent> Components { get; } = new ListNonNull<ThreeMfComponent>();
+        public ListNonNull<ThreeMfComponent> Components { get; } = new ListNonNull<ThreeMfComponent>();
 
         public ThreeMfObject()
         {
@@ -48,7 +48,7 @@ namespace IxMilia.ThreeMf
             Mesh = new ThreeMfMesh();
         }
 
-        internal override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
+        public override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
             string thumbnailPath = null;
             if (ThumbnailData != null)
@@ -78,7 +78,7 @@ namespace IxMilia.ThreeMf
                 Components.Count == 0 ? null : new XElement(ComponentsName, Components.Select(c => c.ToXElement(resourceMap))));
         }
 
-        internal override void AfterPartAdded(Package package, PackagePart packagePart)
+        public override void AfterPartAdded(Package package, PackagePart packagePart)
         {
             if (_thumbnailUri != null)
             {
@@ -87,10 +87,11 @@ namespace IxMilia.ThreeMf
             }
         }
 
-        internal static ThreeMfObject ParseObject(XElement element, Dictionary<int, ThreeMfResource> resourceMap, Package package)
+        public static ThreeMfObject ParseObject(
+            XElement element, Dictionary<int, ThreeMfResource> resourceMap, Package package)
         {
             var obj = new ThreeMfObject();
-            obj.Id = element.AttributeIntValueOrThrow(IdAttributeName);
+            obj.Id = element.AttributeIntOrThrow(IdAttributeName);
             obj.Type = ParseObjectType(element.Attribute(TypeAttributeName)?.Value);
             obj.PartNumber = element.Attribute(PartNumberAttributeName)?.Value;
             obj.Name = element.Attribute(NameAttributeName)?.Value;
@@ -130,20 +131,15 @@ namespace IxMilia.ThreeMf
             return obj;
         }
 
-        internal static ThreeMfObjectType ParseObjectType(string value)
+        public static ThreeMfObjectType ParseObjectType(string value)
         {
-            switch (value)
+            return value switch
             {
-                case "model":
-                case null:
-                    return ThreeMfObjectType.Model;
-                case "support":
-                    return ThreeMfObjectType.Support;
-                case "other":
-                    return ThreeMfObjectType.Other;
-                default:
-                    throw new ThreeMfParseException($"Invalid object type '{value}'.");
-            }
+                "model" or null => ThreeMfObjectType.Model,
+                "support" => ThreeMfObjectType.Support,
+                "other" => ThreeMfObjectType.Other,
+                _ => throw new ThreeMfParseException($"Invalid object type '{value}'."),
+            };
         }
     }
 }

@@ -17,13 +17,11 @@ namespace IxMilia.ThreeMf.Test
 
         public static ThreeMfFile RoundTripFile(ThreeMfFile file)
         {
-            using (var ms = new MemoryStream())
-            {
-                file.Save(ms);
-                ms.Seek(0, SeekOrigin.Begin);
-                var file2 = ThreeMfFile.Load(ms);
-                return file2;
-            }
+            using var ms = new MemoryStream();
+            file.Save(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+            var file2 = ThreeMfFile.Load(ms);
+            return file2;
         }
     }
 }

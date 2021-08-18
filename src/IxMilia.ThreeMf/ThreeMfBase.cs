@@ -28,9 +28,9 @@ namespace IxMilia.ThreeMf
 
         internal static ThreeMfBase ParseBaseMaterial(XElement baseElement)
         {
-            var name = baseElement.AttributeValueOrThrow(NameAttributeName);
-            var color = ThreeMfsRGBColor.Parse(baseElement.AttributeValueOrThrow(DisplayColorAttributeName));
-            return new ThreeMfBase(name, color);
+            XAttribute name = baseElement.AttributeOrThrow(NameAttributeName);
+            var color = ThreeMfsRGBColor.Parse(baseElement.AttributeOrThrow(DisplayColorAttributeName).Value);
+            return new ThreeMfBase(name.Value, color);
         }
     }
 }

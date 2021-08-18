@@ -8,7 +8,7 @@ namespace IxMilia.ThreeMf
         private const string UAttributeName = "u";
         private const string VAttributeName = "v";
 
-        internal static XName Texture2DCoordinateName = XName.Get("tex2coord", ThreeMfModel.MaterialNamespace);
+        public static XName Texture2DCoordinateName { get; } = XName.Get("tex2coord", ThreeMfModel.MaterialNamespace);
 
         public double U { get; set; }
         public double V { get; set; }
@@ -19,17 +19,17 @@ namespace IxMilia.ThreeMf
             V = v;
         }
 
-        internal XElement ToXElement()
+        public XElement ToXElement()
         {
             return new XElement(Texture2DCoordinateName,
                 new XAttribute(UAttributeName, U),
                 new XAttribute(VAttributeName, V));
         }
 
-        internal static ThreeMfTexture2DCoordinate ParseCoordinate(XElement element)
+        public static ThreeMfTexture2DCoordinate ParseCoordinate(XElement element)
         {
-            var u = element.AttributeDoubleValueOrThrow(UAttributeName);
-            var v = element.AttributeDoubleValueOrThrow(VAttributeName);
+            var u = element.AttributeDoubleOrThrow(UAttributeName);
+            var v = element.AttributeDoubleOrThrow(VAttributeName);
             return new ThreeMfTexture2DCoordinate(u, v);
         }
     }

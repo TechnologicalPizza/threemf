@@ -1,9 +1,10 @@
-﻿using System.Xml.Linq;
+﻿using System;
+using System.Xml.Linq;
 using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public struct ThreeMfVertex
+    public struct ThreeMfVertex : IEquatable<ThreeMfVertex>
     {
         private const string XAttributeName = "x";
         private const string YAttributeName = "y";
@@ -11,9 +12,9 @@ namespace IxMilia.ThreeMf
 
         internal static XName VertexName = XName.Get("vertex", ThreeMfModel.ModelNamespace);
 
-        public double X { get; set; }
-        public double Y { get; set; }
-        public double Z { get; set; }
+        public double X;
+        public double Y;
+        public double Z;
 
         public ThreeMfVertex(double x, double y, double z)
         {
@@ -22,7 +23,7 @@ namespace IxMilia.ThreeMf
             Z = z;
         }
 
-        internal XElement ToXElement()
+        public readonly XElement ToXElement()
         {
             return new XElement(VertexName,
                 new XAttribute(XAttributeName, X),
@@ -30,15 +31,18 @@ namespace IxMilia.ThreeMf
                 new XAttribute(ZAttributeName, Z));
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return $"({X}, {Y}, {Z})";
         }
 
+        public readonly bool Equals(ThreeMfVertex other)
+        {
+            return this == other;
+        }
+
         public static bool operator ==(ThreeMfVertex a, ThreeMfVertex b)
         {
-            if (ReferenceEquals(a, b))
-                return true;
             return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
         }
 
@@ -47,23 +51,21 @@ namespace IxMilia.ThreeMf
             return !(a == b);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
-            return base.GetHashCode();
+            return HashCode.Combine(X, Y, Z);
         }
 
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
-            if (obj is ThreeMfVertex)
-                return this == (ThreeMfVertex)obj;
-            return false;
+            return obj is ThreeMfVertex vertex && Equals(vertex);
         }
 
-        internal static ThreeMfVertex ParseVertex(XElement element)
+        public static ThreeMfVertex ParseVertex(XElement element)
         {
-            var x = element.AttributeDoubleValueOrThrow(XAttributeName);
-            var y = element.AttributeDoubleValueOrThrow(YAttributeName);
-            var z = element.AttributeDoubleValueOrThrow(ZAttributeName);
+            double x = element.AttributeDoubleOrThrow(XAttributeName);
+            double y = element.AttributeDoubleOrThrow(YAttributeName);
+            double z = element.AttributeDoubleOrThrow(ZAttributeName);
             return new ThreeMfVertex(x, y, z);
         }
     }

@@ -8,9 +8,8 @@ namespace IxMilia.ThreeMf
     public class ThreeMfComponent
     {
         private const string ObjectIdAttributeName = "objectid";
-        private const string TransformAttributeName = "transform";
 
-        internal static XName ComponentName = XName.Get("component", ThreeMfModel.ModelNamespace);
+        public static XName ComponentName { get; } = XName.Get("component", ThreeMfModel.ModelNamespace);
 
         private ThreeMfResource _obj;
 
@@ -28,7 +27,7 @@ namespace IxMilia.ThreeMf
             Transform = transform;
         }
 
-        internal XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
+        public XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
             var objectId = resourceMap[Object];
             return new XElement(ComponentName,
@@ -36,14 +35,14 @@ namespace IxMilia.ThreeMf
                 Transform.ToXAttribute());
         }
 
-        internal static ThreeMfComponent ParseComponent(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
+        public static ThreeMfComponent ParseComponent(XElement element, Dictionary<int, ThreeMfResource> resourceMap)
         {
             if (element == null)
             {
                 return null;
             }
 
-            if (!int.TryParse(element.AttributeValueOrThrow(ObjectIdAttributeName), out var objectId) &&
+            if (!int.TryParse(element.AttributeOrThrow(ObjectIdAttributeName).Value, out int objectId) &&
                 !resourceMap.ContainsKey(objectId))
             {
                 throw new ThreeMfParseException($"Invalid object id {objectId}.");

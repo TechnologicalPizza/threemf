@@ -10,7 +10,6 @@ namespace IxMilia.ThreeMf
     {
         private const string PathAttributeName = "path";
         private const string ContentTypeAttributeName = "contenttype";
-        private const string BoxAttributeName = "box";
         private const string TileStyleUAttributeName = "tilestyleu";
         private const string TileStyleVAttributeName = "tilestylev";
         private const string TextureContentType = "application/vnd.ms-package.3dmanufacturing-3dmodeltexture";
@@ -37,9 +36,9 @@ namespace IxMilia.ThreeMf
             ContentType = contentType;
         }
 
-        internal override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
+        public override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
-            var path = $"/3D/Textures/{Guid.NewGuid().ToString("N")}{ContentType.ToExtensionString()}";
+            var path = $"/3D/Textures/{Guid.NewGuid():N}{ContentType.ToExtensionString()}";
             _textureUri = new Uri(path, UriKind.RelativeOrAbsolute);
             return new XElement(Texture2DName,
                 new XAttribute(IdAttributeName, Id),
@@ -50,18 +49,18 @@ namespace IxMilia.ThreeMf
                 TileStyleV == ThreeMfTileStyle.Wrap ? null : new XAttribute(TileStyleVAttributeName, TileStyleV.ToTileStyleString()));
         }
 
-        internal override void AfterPartAdded(Package package, PackagePart packagePart)
+        public override void AfterPartAdded(Package package, PackagePart packagePart)
         {
             packagePart.CreateRelationship(_textureUri, TargetMode.Internal, TextureRelationshipType);
             package.WriteBinary(_textureUri.ToString(), TextureContentType, TextureBytes);
         }
 
-        internal static ThreeMfTexture2D ParseTexture(XElement element, Package package)
+        public static ThreeMfTexture2D ParseTexture(XElement element, Package package)
         {
-            var path = element.AttributeValueOrThrow(PathAttributeName);
-            var id = element.AttributeIntValueOrThrow(IdAttributeName);
+            var path = element.AttributeOrThrow(PathAttributeName).Value;
+            var id = element.AttributeIntOrThrow(IdAttributeName);
             var textureBytes = package.GetPartBytes(path);
-            var contentType = ThreeMfImageContentTypeExtensions.ParseContentType(element.AttributeValueOrThrow(ContentTypeAttributeName));
+            var contentType = ThreeMfImageContentTypeExtensions.ParseContentType(element.AttributeOrThrow(ContentTypeAttributeName).Value);
             var texture = new ThreeMfTexture2D(textureBytes, contentType)
             {
                 BoundingBox = ThreeMfBoundingBox.ParseBoundingBox(element.Attribute(ThreeMfBoundingBox.BoundingBoxAttributeName)?.Value),
