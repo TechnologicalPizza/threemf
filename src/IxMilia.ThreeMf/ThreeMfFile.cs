@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 using IxMilia.ThreeMf.Collections;
 using IxMilia.ThreeMf.Extensions;
@@ -10,8 +11,8 @@ namespace IxMilia.ThreeMf
 {
     public class ThreeMfFile
     {
-        private const string RelationshipNamespace = "http://schemas.openxmlformats.org/package/2006/relationships";
-        private const string ModelRelationshipType = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel";
+        public const string RelationshipNamespace = "http://schemas.openxmlformats.org/package/2006/relationships";
+        public const string ModelRelationshipType = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel";
         private const string ModelContentType = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml";
         private const string DefaultModelEntryName = "/3D/3dmodel";
         private const string ModelPathExtension = ".model";
@@ -19,8 +20,8 @@ namespace IxMilia.ThreeMf
         private const string IdAttributeName = "Id";
         private const string TypeAttributeName = "Type";
 
-        internal static XName RelationshipsName = XName.Get("Relationships", RelationshipNamespace);
-        private static XName RelationshipName = XName.Get("Relationship", RelationshipNamespace);
+        public static XName RelationshipsName { get; } = XName.Get("Relationships", RelationshipNamespace);
+        public static XName RelationshipName { get; } = XName.Get("Relationship", RelationshipNamespace);
 
         public ListNonNull<ThreeMfModel> Models { get; } = new ListNonNull<ThreeMfModel>();
 
@@ -74,19 +75,35 @@ namespace IxMilia.ThreeMf
 
         public static ThreeMfFile Load(Package package)
         {
-            var file = new ThreeMfFile();
-            foreach (var modelRelationship in package.GetRelationshipsByType(ModelRelationshipType))
+            try
             {
-                var modelUri = modelRelationship.TargetUri;
-                var modelPart = package.GetPart(modelUri);
-                
-                using var modelStream = modelPart.GetStream();
-                var document = XDocument.Load(modelStream);
-                var model = ThreeMfModel.LoadXml(document.Root, package);
-                file.Models.Add(model);
-            }
+                var file = new ThreeMfFile();
+                var modelRelationShips = package.GetRelationshipsByType(ModelRelationshipType);
+                bool hasAnyModel = false;
 
-            return file;
+                foreach (var modelRelationship in modelRelationShips)
+                {
+                    var modelUri = modelRelationship.TargetUri;
+                    var modelPart = package.GetPart(modelUri);
+
+                    using var modelStream = modelPart.GetStream();
+                    var document = XDocument.Load(modelStream);
+                    var model = ThreeMfModel.LoadXml(document.Root, package);
+                    file.Models.Add(model);
+                    hasAnyModel = true;
+                }
+
+                if (!hasAnyModel)
+                {
+                    throw new ThreeMfParseException("The package lacks 3D model files.");
+                }
+
+                return file;
+            }
+            catch (XmlException ex)
+            {
+                throw new ThreeMfParseException("Malformed XML file.", ex);
+            }
         }
     }
 }

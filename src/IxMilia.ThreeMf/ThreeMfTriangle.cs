@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using IxMilia.ThreeMf.Extensions;
 
@@ -14,16 +15,16 @@ namespace IxMilia.ThreeMf
         private const string V2PropertyAttributeName = "p2";
         private const string V3PropertyAttributeName = "p3";
 
-        internal static XName TriangleName = XName.Get("triangle", ThreeMfModel.ModelNamespace);
+        public static XName TriangleName { get; } = XName.Get("triangle", ThreeMfModel.CoreNamespace);
 
-        public ThreeMfVertex V1 { get; set; }
-        public ThreeMfVertex V2 { get; set; }
-        public ThreeMfVertex V3 { get; set; }
+        public ThreeMfVertex V1;
+        public ThreeMfVertex V2;
+        public ThreeMfVertex V3;
 
-        public IThreeMfPropertyResource PropertyResource { get; set; }
-        public int? V1PropertyIndex { get; set; }
-        public int? V2PropertyIndex { get; set; }
-        public int? V3PropertyIndex { get; set; }
+        public ThreeMfResource PropertyResource;
+        public int V1PropertyIndex;
+        public int V2PropertyIndex;
+        public int V3PropertyIndex;
 
         public ThreeMfTriangle(ThreeMfVertex v1, ThreeMfVertex v2, ThreeMfVertex v3)
         {
@@ -31,12 +32,12 @@ namespace IxMilia.ThreeMf
             V2 = v2;
             V3 = v3;
             PropertyResource = null;
-            V1PropertyIndex = null;
-            V2PropertyIndex = null;
-            V3PropertyIndex = null;
+            V1PropertyIndex = -1;
+            V2PropertyIndex = -1;
+            V3PropertyIndex = -1;
         }
 
-        internal XElement ToXElement(Dictionary<ThreeMfVertex, int> vertices, Dictionary<ThreeMfResource, int> resourceMap)
+        public XElement ToXElement(Dictionary<ThreeMfVertex, int> vertices, Dictionary<ThreeMfResource, int> resourceMap)
         {
             return new XElement(TriangleName,
                 new XAttribute(V1AttributeName, vertices[V1]),
@@ -46,14 +47,15 @@ namespace IxMilia.ThreeMf
                     ? null
                     : new[]
                     {
-                        new XAttribute(PropertyIndexAttributeName, resourceMap[(ThreeMfResource)PropertyResource]),
-                        V1PropertyIndex == null ? null : new XAttribute(V1PropertyAttributeName, V1PropertyIndex.GetValueOrDefault()),
-                        V2PropertyIndex == null ? null : new XAttribute(V2PropertyAttributeName, V2PropertyIndex.GetValueOrDefault()),
-                        V3PropertyIndex == null ? null : new XAttribute(V3PropertyAttributeName, V3PropertyIndex.GetValueOrDefault())
+                        new XAttribute(PropertyIndexAttributeName, resourceMap[PropertyResource]),
+                        V1PropertyIndex == -1 ? null : new XAttribute(V1PropertyAttributeName, V1PropertyIndex),
+                        V2PropertyIndex == -1 ? null : new XAttribute(V2PropertyAttributeName, V2PropertyIndex),
+                        V3PropertyIndex == -1 ? null : new XAttribute(V3PropertyAttributeName, V3PropertyIndex)
                     });
         }
 
-        internal static ThreeMfTriangle ParseTriangle(XElement triangleElement, IList<ThreeMfVertex> vertices, Dictionary<int, ThreeMfResource> resourceMap)
+        public static ThreeMfTriangle ParseTriangle(
+            XElement triangleElement, List<ThreeMfVertex> vertices, Dictionary<int, ThreeMfResource> resourceMap)
         {
             var v1Index = triangleElement.AttributeIntOrThrow(V1AttributeName);
             var v2Index = triangleElement.AttributeIntOrThrow(V2AttributeName);
@@ -72,7 +74,8 @@ namespace IxMilia.ThreeMf
             }
 
             var triangle = new ThreeMfTriangle(vertices[v1Index], vertices[v2Index], vertices[v3Index]);
-            if (resourceMap.TryGetPropertyResource(triangleElement, PropertyIndexAttributeName, out var propertyResource))
+            if (resourceMap.TryGetPropertyResource<ThreeMfResource>(
+                triangleElement, PropertyIndexAttributeName, out var propertyResource))
             {
                 triangle.PropertyResource = propertyResource;
                 triangle.V1PropertyIndex = propertyResource.ParseAndValidateOptionalResourceIndex(triangleElement, V1PropertyAttributeName);

@@ -6,11 +6,11 @@ using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public class ThreeMfColorGroup : ThreeMfResource, IThreeMfPropertyResource
+    public class ThreeMfColorGroup : ThreeMfResource
     {
         public ListNonNull<ThreeMfColor> Colors { get; } = new ListNonNull<ThreeMfColor>();
 
-        IEnumerable<IThreeMfPropertyItem> IThreeMfPropertyResource.PropertyItems => Colors;
+        public override int PropertyCount => Colors.Count;
 
         public override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
@@ -28,7 +28,6 @@ namespace IxMilia.ThreeMf
                 var color = ThreeMfColor.ParseColor(colorElement);
                 colorGroup.Colors.Add(color);
             }
-
             return colorGroup;
         }
     }

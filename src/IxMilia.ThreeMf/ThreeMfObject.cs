@@ -20,11 +20,11 @@ namespace IxMilia.ThreeMf
 
         public const string ThumbnailPathPrefix = "/3D/Thumbnails/";
 
-        public static XName MeshName { get; } = XName.Get("mesh", ThreeMfModel.ModelNamespace);
-        public static XName ComponentsName { get; } = XName.Get("components", ThreeMfModel.ModelNamespace);
+        public static XName MeshName { get; } = XName.Get("mesh", ThreeMfModel.CoreNamespace);
+        public static XName ComponentsName { get; } = XName.Get("components", ThreeMfModel.CoreNamespace);
 
         public ThreeMfObjectType Type { get; set; }
-        public IThreeMfPropertyResource PropertyResource { get; set; }
+        public ThreeMfResource PropertyResource { get; set; }
         public int PropertyIndex { get; set; }
         public string PartNumber { get; set; }
         public string Name { get; set; }
@@ -118,7 +118,8 @@ namespace IxMilia.ThreeMf
                 }
             }
 
-            if (resourceMap.TryGetPropertyResource(element, PropertyReferenceAttributeName, out var propertyResource))
+            if (resourceMap.TryGetPropertyResource<ThreeMfResource>(
+                element, PropertyReferenceAttributeName, out var propertyResource))
             {
                 obj.PropertyResource = propertyResource;
                 obj.PropertyIndex = propertyResource.ParseAndValidateRequiredResourceIndex(element, PropertyIndexAttributeName);

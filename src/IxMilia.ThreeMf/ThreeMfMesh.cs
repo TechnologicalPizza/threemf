@@ -6,8 +6,8 @@ namespace IxMilia.ThreeMf
 {
     public class ThreeMfMesh
     {
-        private static XName VerticesName = XName.Get("vertices", ThreeMfModel.ModelNamespace);
-        private static XName TrianglesName = XName.Get("triangles", ThreeMfModel.ModelNamespace);
+        private static XName VerticesName = XName.Get("vertices", ThreeMfModel.CoreNamespace);
+        private static XName TrianglesName = XName.Get("triangles", ThreeMfModel.CoreNamespace);
 
         public List<ThreeMfTriangle> Triangles { get; } = new List<ThreeMfTriangle>();
 

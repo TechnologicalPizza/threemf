@@ -3,15 +3,15 @@ using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public class ThreeMfBase : IThreeMfPropertyItem
+    public readonly struct ThreeMfBase
     {
         private const string NameAttributeName = "name";
         private const string DisplayColorAttributeName = "displaycolor";
 
-        internal static XName BaseName = XName.Get("base", ThreeMfModel.ModelNamespace);
+        public static XName BaseName { get; } = XName.Get("base", ThreeMfModel.CoreNamespace);
 
-        public string Name { get; set; }
-        public ThreeMfsRGBColor Color { get; set; }
+        public string Name { get; }
+        public ThreeMfsRGBColor Color { get; }
 
         public ThreeMfBase(string name, ThreeMfsRGBColor color)
         {
@@ -19,14 +19,14 @@ namespace IxMilia.ThreeMf
             Color = color;
         }
 
-        internal XElement ToXElement()
+        public XElement ToXElement()
         {
             return new XElement(BaseName,
                 new XAttribute(NameAttributeName, Name),
                 new XAttribute(DisplayColorAttributeName, Color.ToString()));
         }
 
-        internal static ThreeMfBase ParseBaseMaterial(XElement baseElement)
+        public static ThreeMfBase ParseBaseMaterial(XElement baseElement)
         {
             XAttribute name = baseElement.AttributeOrThrow(NameAttributeName);
             var color = ThreeMfsRGBColor.Parse(baseElement.AttributeOrThrow(DisplayColorAttributeName).Value);

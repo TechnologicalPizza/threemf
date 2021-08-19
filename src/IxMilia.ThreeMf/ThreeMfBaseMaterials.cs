@@ -6,11 +6,11 @@ using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public class ThreeMfBaseMaterials : ThreeMfResource, IThreeMfPropertyResource
+    public class ThreeMfBaseMaterials : ThreeMfResource
     {
         public ListNonNull<ThreeMfBase> Bases { get; } = new ListNonNull<ThreeMfBase>();
 
-        IEnumerable<IThreeMfPropertyItem> IThreeMfPropertyResource.PropertyItems => Bases;
+        public override int PropertyCount => Bases.Count;
 
         public override XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap)
         {
@@ -23,6 +23,7 @@ namespace IxMilia.ThreeMf
         {
             var baseMaterials = new ThreeMfBaseMaterials();
             baseMaterials.Id = element.AttributeIntOrThrow(IdAttributeName);
+
             foreach (var baseElement in element.Elements(ThreeMfBase.BaseName))
             {
                 var baseMaterial = ThreeMfBase.ParseBaseMaterial(baseElement);

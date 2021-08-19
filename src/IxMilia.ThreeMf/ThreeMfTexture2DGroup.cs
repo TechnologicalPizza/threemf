@@ -6,14 +6,14 @@ using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public class ThreeMfTexture2DGroup : ThreeMfResource, IThreeMfPropertyResource
+    public class ThreeMfTexture2DGroup : ThreeMfResource
     {
         private const string TextureIdAttributeName = "texid";
 
-        public ListNonNull<ThreeMfTexture2DCoordinate> Coordinates { get; } = new ListNonNull<ThreeMfTexture2DCoordinate>();
+        public ListNonNull<ThreeMfTexture2DCoord> Coordinates { get; } = new ListNonNull<ThreeMfTexture2DCoord>();
         public ThreeMfTexture2D Texture { get; set; }
 
-        IEnumerable<IThreeMfPropertyItem> IThreeMfPropertyResource.PropertyItems => Coordinates;
+        public override int PropertyCount => Coordinates.Count;
 
         public ThreeMfTexture2DGroup(ThreeMfTexture2D texture)
         {
@@ -34,9 +34,9 @@ namespace IxMilia.ThreeMf
             var texture = resourceMap[element.AttributeIntOrThrow(TextureIdAttributeName)] as ThreeMfTexture2D;
             var textureGroup = new ThreeMfTexture2DGroup(texture);
             textureGroup.Id = element.AttributeIntOrThrow(IdAttributeName);
-            foreach (var textureCoordinateElement in element.Elements(ThreeMfTexture2DCoordinate.Texture2DCoordinateName))
+            foreach (var textureCoordinateElement in element.Elements(ThreeMfTexture2DCoord.Texture2DCoordName))
             {
-                var coord = ThreeMfTexture2DCoordinate.ParseCoordinate(textureCoordinateElement);
+                var coord = ThreeMfTexture2DCoord.ParseCoordinate(textureCoordinateElement);
                 textureGroup.Coordinates.Add(coord);
             }
 

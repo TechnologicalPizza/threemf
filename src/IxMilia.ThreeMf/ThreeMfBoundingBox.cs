@@ -1,18 +1,19 @@
 ﻿using System;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace IxMilia.ThreeMf
 {
     public struct ThreeMfBoundingBox
     {
-        internal const string BoundingBoxAttributeName = "box";
+        public const string BoundingBoxAttributeName = "box";
 
-        public double U { get; set; }
-        public double V { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
+        public double U;
+        public double V;
+        public double Width;
+        public double Height;
 
-        public bool IsDefault => U == 0.0 && V == 0.0 && Width == 1.0 && Height == 1.0;
+        public readonly bool IsDefault => U == 0.0 && V == 0.0 && Width == 1.0 && Height == 1.0;
 
         public ThreeMfBoundingBox(double u, double v, double width, double height)
         {
@@ -24,7 +25,7 @@ namespace IxMilia.ThreeMf
 
         public static ThreeMfBoundingBox Default => new(0.0, 0.0, 1.0, 1.0);
 
-        internal XAttribute ToXAttribute()
+        public readonly XAttribute ToXAttribute()
         {
             if (IsDefault)
             {
@@ -35,11 +36,11 @@ namespace IxMilia.ThreeMf
             return new XAttribute(BoundingBoxAttributeName, $"{U} {V} {Width} {Height}");
         }
 
-        internal static ThreeMfBoundingBox ParseBoundingBox(string value)
+        public static ThreeMfBoundingBox ParseBoundingBox(string value)
         {
             if (value == null)
             {
-                return ThreeMfBoundingBox.Default;
+                return Default;
             }
 
             var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -48,15 +49,19 @@ namespace IxMilia.ThreeMf
                 throw new ThreeMfParseException($"Bounding box requires 4 values.");
             }
 
-            if (!double.TryParse(parts[0], out var u) ||
-                !double.TryParse(parts[1], out var v) ||
-                !double.TryParse(parts[2], out var width) ||
-                !double.TryParse(parts[3], out var height))
+            try
             {
-                throw new ThreeMfParseException("Invalid value in bounding box.");
-            }
+                double u = XmlConvert.ToDouble(parts[0]);
+                double v = XmlConvert.ToDouble(parts[1]);
+                double width = XmlConvert.ToDouble(parts[2]);
+                double height = XmlConvert.ToDouble(parts[3]);
 
-            return new ThreeMfBoundingBox(u, v, width, height);
+                return new ThreeMfBoundingBox(u, v, width, height);
+            }
+            catch (FormatException ex)
+            {
+                throw new ThreeMfParseException("Invalid value in bounding box.", ex);
+            }
         }
     }
 }

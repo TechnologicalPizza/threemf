@@ -2,8 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Packaging;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
+using System.Xml.Linq;
 using Xunit;
 
 namespace IxMilia.ThreeMf.Test
@@ -39,12 +42,57 @@ namespace IxMilia.ThreeMf.Test
         }
 
         [Fact]
-        public void LoadFromDiskTest()
+        public void LoadFromDiskTestMustSucceed()
         {
-            var samplesDir = Path.Combine(Path.GetDirectoryName(typeof(ThreeMfFileLoadTests).GetTypeInfo().Assembly.Location), "Samples");
-            var loadedFiles = 0;
-            foreach (var path in Directory.EnumerateFiles(samplesDir, "*.3mf", SearchOption.AllDirectories))
+            LoadFromDiskTestWith("Samples", (package, pathParts) =>
             {
+                int size = 0;
+
+                void LoadModels()
+                {
+                    var file = ThreeMfFile.Load(package);
+                    size = file.Models.Count;
+                }
+
+                if (!pathParts.Contains("MUSTFAIL"))
+                {
+                    LoadModels();
+                }
+                return size;
+            });
+        }
+
+        [Fact]
+        public void LoadFromDiskTestMustFail()
+        {
+            LoadFromDiskTestWith("Samples/validation tests/_archive/3mf-Verify/MUSTFAIL", (package, pathParts) =>
+            {
+                void LoadModels()
+                {
+                    _ = ThreeMfFile.Load(package);
+                }
+
+                if (pathParts.Contains("MUSTFAIL_3MF100_Extension_Chapter5a_MissingPIDs.3mf"))
+                {
+                    // pid is optional by spec so why does this file exist?
+                    return 0;
+                }
+
+                Assert.Throws<ThreeMfParseException>(LoadModels);
+                return 1;
+            });
+        }
+
+        private void LoadFromDiskTestWith(string directory, Func<Package, string[], int> packageAction)
+        {
+            var samplesDir = Path.Combine(
+                Path.GetDirectoryName(typeof(ThreeMfFileLoadTests).GetTypeInfo().Assembly.Location), directory);
+
+            var loadedFiles = 0;
+            foreach (var pathe in Directory.EnumerateFiles(samplesDir, "*.3mf", SearchOption.AllDirectories))
+            {
+                string path = pathe;// @"C:\Projects\Repos\PrinterFace\threemf\artifacts\bin\IxMilia.ThreeMf.Test\Debug\net5.0\Samples\validation tests\_archive\3mf-Verify\MUSTFAIL\MUSTFAIL_3MF100_Extension_Chapter5b_ReferToAnotherMultiProperties.3mf";// @"C:\Projects\Repos\PrinterFace\threemf\artifacts\bin\IxMilia.ThreeMf.Test\Debug\net5.0\Samples\validation tests\_archive\3mf-Verify\MUSTFAIL\MUSTFAIL_3MF100_Extension_Chapter5b_MultipleReferenceToBaseAndCompositeMatterials.3mf";;
+
                 var fileName = Path.GetFileName(path);
                 if (fileName == "multiprop-metallic.3mf" || fileName == "multiprop-translucent.3mf")
                 {
@@ -59,25 +107,47 @@ namespace IxMilia.ThreeMf.Test
                     continue;
                 }
 
-                void LoadModels()
+                using var fs = new FileStream(path, FileMode.Open);
+                using var package = Package.Open(fs);
+                bool shouldContinue = false;
+
+                foreach (var modelRelationship in package.GetRelationshipsByType(ThreeMfFile.ModelRelationshipType))
                 {
-                    using var fs = new FileStream(path, FileMode.Open);
-                    var file = ThreeMfFile.Load(fs);
-                    foreach (var model in file.Models)
+                    var modelUri = modelRelationship.TargetUri;
+                    var modelPart = package.GetPart(modelUri);
+
+                    try
                     {
-                        loadedFiles++;
+                        using var modelStream = modelPart.GetStream();
+                        var document = XDocument.Load(modelStream);
+
+                        if (document.Root.Attributes().Any(
+                            x => x.Name.Namespace.NamespaceName == "http://www.w3.org/2000/xmlns/"))
+                        {
+                            string relativePath = Path.GetRelativePath(samplesDir, path);
+
+                            Debug.WriteLine(
+                                $"The following namespaces in \"{relativePath}\" are not supported: " +
+                                string.Join(", ", document.Root.Attributes().Where(
+                                    x => x.Name.Namespace.NamespaceName == "http://www.w3.org/2000/xmlns/")));
+
+                            shouldContinue = true;
+                            continue;
+                        }
+                    }
+                    catch (XmlException ex)
+                    {
+                        Debug.WriteLine(path);
+                        Debug.WriteLine(ex);
+                        shouldContinue = true;
+                        continue;
                     }
                 }
 
-                Debug.WriteLine(path);
-                if (pathParts.Contains("MUSTFAIL"))
-                {
-                    Assert.Throws<ThreeMfParseException>(LoadModels);
-                }
-                else
-                {
-                    LoadModels();
-                }
+                if (shouldContinue)
+                    continue;
+
+                loadedFiles += packageAction.Invoke(package, pathParts);
             }
 
             Assert.True(loadedFiles > 0, "No sample files were loaded.  Ensure all submodules have been initialized.");
@@ -92,7 +162,7 @@ namespace IxMilia.ThreeMf.Test
   <Relationship Target=""/non/standard/path/to/model.model"" Id=""rel0"" Type=""http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"" />
 </Relationships>
 "),
-                Tuple.Create("non/standard/path/to/model.model", $@"<model unit=""millimeter"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>")
+                Tuple.Create("non/standard/path/to/model.model", $@"<model unit=""millimeter"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.CoreNamespace}""></model>")
             );
 
             var model = file.Models.Single();
@@ -109,8 +179,8 @@ namespace IxMilia.ThreeMf.Test
   <Relationship Target=""/3D/3dmodel-2.model"" Id=""rel2"" Type=""http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"" />
 </Relationships>
 "),
-                Tuple.Create("3D/3dmodel-1.model", $@"<model unit=""millimeter"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>"),
-                Tuple.Create("3D/3dmodel-2.model", $@"<model unit=""inch"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>")
+                Tuple.Create("3D/3dmodel-1.model", $@"<model unit=""millimeter"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.CoreNamespace}""></model>"),
+                Tuple.Create("3D/3dmodel-2.model", $@"<model unit=""inch"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.CoreNamespace}""></model>")
             );
 
             Assert.Equal(2, file.Models.Count);

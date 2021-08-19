@@ -10,7 +10,7 @@ namespace IxMilia.ThreeMf
         private const string YAttributeName = "y";
         private const string ZAttributeName = "z";
 
-        internal static XName VertexName = XName.Get("vertex", ThreeMfModel.ModelNamespace);
+        internal static XName VertexName = XName.Get("vertex", ThreeMfModel.CoreNamespace);
 
         public double X;
         public double Y;

@@ -29,14 +29,14 @@ namespace IxMilia.ThreeMf.Test
 
         private static ThreeMfModel FromContent(string content, params ValueTuple<string, string, byte[]>[] packageEntries)
         {
-            return ParseXml($@"<model xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"">" +
+            return ParseXml($@"<model xmlns=""{ThreeMfModel.CoreNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"">" +
                 content +
                 "</model>", packageEntries);
         }
 
         private static void AssertUnits(string unitsString, ThreeMfModelUnits expectedUnits)
         {
-            var model = ParseXml($@"<model unit=""{unitsString}"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>");
+            var model = ParseXml($@"<model unit=""{unitsString}"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.CoreNamespace}""></model>");
             Assert.Equal(expectedUnits, model.ModelUnits);
         }
 
@@ -50,7 +50,7 @@ namespace IxMilia.ThreeMf.Test
             AssertUnits("foot", ThreeMfModelUnits.Foot);
             AssertUnits("meter", ThreeMfModelUnits.Meter);
 
-            Assert.Throws<ThreeMfParseException>(() => ParseXml($@"<model unit=""mile"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.ModelNamespace}""></model>"));
+            Assert.Throws<ThreeMfParseException>(() => ParseXml($@"<model unit=""mile"" xml:lang=""en-US"" xmlns=""{ThreeMfModel.CoreNamespace}""></model>"));
         }
 
         [Fact]
@@ -224,9 +224,9 @@ namespace IxMilia.ThreeMf.Test
 
             var triangle = ((ThreeMfObject)model.Resources.Last()).Mesh.Triangles.Single();
             var propertyResource = triangle.PropertyResource;
-            Assert.Equal("white", ((ThreeMfBase)propertyResource.PropertyItems.First()).Name);
+            Assert.Equal("white", ((ThreeMfBaseMaterials)propertyResource).Bases.First().Name);
             Assert.Equal(0, triangle.V1PropertyIndex);
-            Assert.Null(triangle.V2PropertyIndex);
+            Assert.Equal(-1, triangle.V2PropertyIndex);
             Assert.Equal(1, triangle.V3PropertyIndex);
         }
 
@@ -234,7 +234,7 @@ namespace IxMilia.ThreeMf.Test
         public void ReadTriangleVertexPropertiesFromUnsupportedResourceTest()
         {
             var model = ParseXml($@"
-<model xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:x=""http://www.ixmilia.com"">
+<model xmlns=""{ThreeMfModel.CoreNamespace}"" xmlns:x=""http://www.ixmilia.com"">
   <resources>
     <x:unsupported id=""1"" />
     <object id=""2"">
@@ -276,7 +276,7 @@ namespace IxMilia.ThreeMf.Test
 
             var obj = (ThreeMfObject)model.Resources.Last();
             var propertyResource = obj.PropertyResource;
-            Assert.Equal("white", ((ThreeMfBase)propertyResource.PropertyItems.First()).Name);
+            Assert.Equal("white", ((ThreeMfBaseMaterials)propertyResource).Bases.First().Name);
             Assert.Equal(0, obj.PropertyIndex);
         }
 
@@ -284,7 +284,7 @@ namespace IxMilia.ThreeMf.Test
         public void ReadObjectPropertiesFromUnsupportedResourceTest()
         {
             var model = ParseXml($@"
-<model xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:x=""http://www.ixmilia.com"">
+<model xmlns=""{ThreeMfModel.CoreNamespace}"" xmlns:x=""http://www.ixmilia.com"">
   <resources>
     <x:unsupported id=""1"" />
     <object id=""2"" pid=""1"" pindex=""0"">

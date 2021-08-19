@@ -8,13 +8,16 @@ namespace IxMilia.ThreeMf
     {
         protected const string IdAttributeName = "id";
 
-        public static XName ObjectName { get; } = XName.Get("object", ThreeMfModel.ModelNamespace);
-        public static XName BaseMaterialsName { get; } = XName.Get("basematerials", ThreeMfModel.ModelNamespace);
+        public static XName ObjectName { get; } = XName.Get("object", ThreeMfModel.CoreNamespace);
+        public static XName BaseMaterialsName { get; } = XName.Get("basematerials", ThreeMfModel.CoreNamespace);
         public static XName ColorGroupName { get; } = XName.Get("colorgroup", ThreeMfModel.MaterialNamespace);
         public static XName Texture2DName { get; } = XName.Get("texture2d", ThreeMfModel.MaterialNamespace);
         public static XName Texture2DGroupName { get; } = XName.Get("texture2dgroup", ThreeMfModel.MaterialNamespace);
-        
+        public static XName CompositeMaterialsName { get; } = XName.Get("compositematerials", ThreeMfModel.MaterialNamespace);
+
         public int Id { get; internal set; }
+
+        public virtual int PropertyCount => 0;
 
         public abstract XElement ToXElement(Dictionary<ThreeMfResource, int> resourceMap);
 
@@ -45,10 +48,20 @@ namespace IxMilia.ThreeMf
             {
                 return ThreeMfTexture2DGroup.ParseTexture2DGroup(element, resourceMap);
             }
+            else if (element.Name == CompositeMaterialsName)
+            {
+                return ThreeMfCompositeMaterials.ParseCompositeMaterials(element, resourceMap);
+            }
+            else if (element.Name == SliceStackName)
+            {
+                return null;
+            }
             else
             {
                 return null;
             }
         }
+
+        public static XName SliceStackName { get; } = XName.Get("slicestack", ThreeMfModel.SliceNamespace);
     }
 }

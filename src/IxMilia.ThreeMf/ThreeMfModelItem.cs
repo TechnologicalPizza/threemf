@@ -10,7 +10,7 @@ namespace IxMilia.ThreeMf
         private const string ObjectIdAttributeName = "objectid";
         private const string PartNumberAttributeName = "partnumber";
 
-        private static XName ItemName = XName.Get("item", ThreeMfModel.ModelNamespace);
+        private static XName ItemName = XName.Get("item", ThreeMfModel.CoreNamespace);
 
         private ThreeMfResource _obj;
 

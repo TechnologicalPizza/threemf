@@ -8,7 +8,7 @@ namespace IxMilia.ThreeMf.Test
         private static string StripXmlns(string value)
         {
             // don't want to specify this in every test
-            return value.Replace(" xmlns=\"" + ThreeMfModel.ModelNamespace + "\"", "");
+            return value.Replace(" xmlns=\"" + ThreeMfModel.CoreNamespace + "\"", "");
         }
 
         private static string GetStrippedModelXml(ThreeMfModel model)
@@ -106,13 +106,13 @@ namespace IxMilia.ThreeMf.Test
         [Fact]
         public void ReadSupportedRequiredExtensionsTest()
         {
-            _ = ParseXml($@"<model requiredextensions=""m"" xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"" />");
+            _ = ParseXml($@"<model requiredextensions=""m"" xmlns=""{ThreeMfModel.CoreNamespace}"" xmlns:m=""{ThreeMfModel.MaterialNamespace}"" />");
         }
 
         [Fact]
         public void ReadUnsupportedRequiredExtensionsTest()
         {
-            Assert.Throws<ThreeMfParseException>(() => ParseXml($@"<model requiredextensions=""i"" xmlns=""{ThreeMfModel.ModelNamespace}"" xmlns:i=""http://www.ixmilia.com"" />"));
+            Assert.Throws<ThreeMfParseException>(() => ParseXml($@"<model requiredextensions=""i"" xmlns=""{ThreeMfModel.CoreNamespace}"" xmlns:i=""http://www.ixmilia.com"" />"));
         }
 
         [Fact]
@@ -268,8 +268,8 @@ namespace IxMilia.ThreeMf.Test
             var triangle = new ThreeMfTriangle(new ThreeMfVertex(0, 0, 0), new ThreeMfVertex(1, 1, 1), new ThreeMfVertex(2, 2, 2));
             triangle.PropertyResource = baseMaterials;
             triangle.V1PropertyIndex = 0;
-            triangle.V2PropertyIndex = null;
-            triangle.V3PropertyIndex = null;
+            triangle.V2PropertyIndex = -1;
+            triangle.V3PropertyIndex = -1;
             obj.Mesh.Triangles.Add(triangle);
             model.Resources.Add(obj);
 
@@ -376,7 +376,7 @@ namespace IxMilia.ThreeMf.Test
         {
             var model = new ThreeMfModel();
             var textureGroup = new ThreeMfTexture2DGroup(new ThreeMfTexture2D(System.Array.Empty<byte>(), ThreeMfImageContentType.Jpeg));
-            textureGroup.Coordinates.Add(new ThreeMfTexture2DCoordinate(1.0, 2.0));
+            textureGroup.Coordinates.Add(new ThreeMfTexture2DCoord(1.0, 2.0));
             model.Resources.Add(textureGroup);
 
             // texture was never added to the texture group; ensure it is when writing

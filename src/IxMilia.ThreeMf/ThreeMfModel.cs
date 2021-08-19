@@ -9,8 +9,9 @@ namespace IxMilia.ThreeMf
 {
     public class ThreeMfModel
     {
-        public const string ModelNamespace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+        public const string CoreNamespace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
         public const string MaterialNamespace = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02";
+        public const string SliceNamespace = "http://schemas.microsoft.com/3dmanufacturing/slice/2015/07";
 
         private const string Metadata_Title = "Title";
         private const string Metadata_Designer = "Designer";
@@ -25,17 +26,17 @@ namespace IxMilia.ThreeMf
         private const string RequiredExtensionsAttributeName = "requiredextensions";
         private const string DefaultLanguage = "en-US";
 
-        public static XName ModelName { get; } = XName.Get("model", ModelNamespace);
-        public static XName BuildName { get; } = XName.Get("build", ModelNamespace);
-        public static XName ResourcesName { get; } = XName.Get("resources", ModelNamespace);
-        public static XName MetadataName { get; } = XName.Get("metadata", ModelNamespace);
+        public static XName ModelName { get; } = XName.Get("model", CoreNamespace);
+        public static XName BuildName { get; } = XName.Get("build", CoreNamespace);
+        public static XName ResourcesName { get; } = XName.Get("resources", CoreNamespace);
+        public static XName MetadataName { get; } = XName.Get("metadata", CoreNamespace);
 
         private static XName XmlLanguageAttributeName = XNamespace.Xml + "lang";
 
         private static HashSet<string> KnownExtensionNamespaces = new()
         {
-            ModelNamespace,
-            MaterialNamespace
+            CoreNamespace,
+            //MaterialNamespace
         };
 
         public ThreeMfModelUnits ModelUnits { get; set; }
@@ -75,6 +76,7 @@ namespace IxMilia.ThreeMf
         {
             var model = new ThreeMfModel();
             model.ParseModelUnits(root.Attribute(UnitAttributeName)?.Value);
+
             var requiredNamespaces = (root.Attribute(RequiredExtensionsAttributeName)?.Value ?? string.Empty)
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(prefix => root.GetNamespaceOfPrefix(prefix).NamespaceName);
@@ -83,7 +85,7 @@ namespace IxMilia.ThreeMf
             {
                 if (!KnownExtensionNamespaces.Contains(rns))
                 {
-                    throw new ThreeMfParseException($"The required namespace '{rns}' is not supported.");
+                    throw new ThreeMfParseException($"The required namespaces are not s'{rns}' is not supported.");
                 }
             }
 

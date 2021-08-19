@@ -9,7 +9,7 @@ namespace IxMilia.ThreeMf
     {
         private const string ObjectIdAttributeName = "objectid";
 
-        public static XName ComponentName { get; } = XName.Get("component", ThreeMfModel.ModelNamespace);
+        public static XName ComponentName { get; } = XName.Get("component", ThreeMfModel.CoreNamespace);
 
         private ThreeMfResource _obj;
 

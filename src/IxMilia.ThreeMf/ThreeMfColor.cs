@@ -3,26 +3,26 @@ using IxMilia.ThreeMf.Extensions;
 
 namespace IxMilia.ThreeMf
 {
-    public class ThreeMfColor : IThreeMfPropertyItem
+    public readonly struct ThreeMfColor
     {
         private const string ColorAttributeName = "color";
 
-        internal static XName ColorName = XName.Get("color", ThreeMfModel.MaterialNamespace);
+        public static XName ColorName { get; } = XName.Get("color", ThreeMfModel.MaterialNamespace);
 
-        public ThreeMfsRGBColor Color { get; set; }
+        public ThreeMfsRGBColor Color { get; }
 
         public ThreeMfColor(ThreeMfsRGBColor color)
         {
             Color = color;
         }
 
-        internal XElement ToXElement()
+        public XElement ToXElement()
         {
             return new XElement(ColorName,
                 new XAttribute(ColorAttributeName, Color.ToString()));
         }
 
-        internal static ThreeMfColor ParseColor(XElement element)
+        public static ThreeMfColor ParseColor(XElement element)
         {
             var color = ThreeMfsRGBColor.Parse(element.AttributeOrThrow(ColorAttributeName).Value);
             return new ThreeMfColor(color);
